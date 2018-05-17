@@ -1,0 +1,22 @@
+springMVC 常用的视图解析器
+    1.InternalResourceViewResolver:国际化视图解析器,将视图名解析为一个URL文件，一般就是使用该解析器将视图名映射到WEB-INF文件下的jsp文件
+    2.FreeMarkerViewResolver:解析为基于FreeMarker模板技术的模板文件
+    3.velocityViewResolver/velocityLayoutViewResolver:解析为基于velocity模板技术的模板文件
+    4.AbstractCachingViewResolver:用来缓存视图的抽象视图解析器.通常情况下，视图在使用前就准备好了.继承改解析器就能够使用视图缓存
+    5.XmlViewResolver ：XML视图解析器.它实现了ViewResolver接口，接受相同DTD定义的XML配置文件作为Spring的XML bean工厂
+    6.ResourceBundleViewResolver：它使用了ResourceBundle定义下的bean，实现了ViewResolver接口，指定了绑定包的名称.
+      通常情况下，配置文件会定义在classpath下的properties文件中，默认的文件名字是views.properties
+    7.UrlBasedViewResolver：它简单实现了ViewResolver接口，它不用显式定义，直接影响逻辑视图到URL的映射.
+      它让你不用任何映射就能通过逻辑视图名称访问资源
+   例子：
+      <bean id="JSPViewResolver" class="org.springframework.web.servlet.view.InternalResourceViewResolver">
+        <property name="viewClass" value="org.springframework.web.servlet.view.JstlView"/>
+        //在多视图解析器解析的情况下，例如配置了2个视图解析器，返回视图名时第一个找得到，第二个却找不到，此处我们使用了InternalResourceViewResolver，
+          其有一个buildView方法，该方法一定会创建一个View；所以呢View永远不为null（即使该jsp不存在）；问题就是出在这；
+          因为我们使用这个的时候默认是使用servlet forward转发的，此时并不知道该jsp是否存在，所以使用viewNames属性来指定一个是否可以处理的规则
+        <property name="viewNames" value="*jsp" />//来指定一个是否可以处理的规则
+        <property name="contentType" value="text/html; charset=utf-8"/>  
+        <property name="prefix" value="/" />
+        <property name="suffix" value="" />
+        <property name="order" value="1"></property>//使用order值进行配置，系统会按照解析器order值来进行查找
+    </bean>
