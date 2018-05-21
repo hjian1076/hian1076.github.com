@@ -75,3 +75,15 @@ public class BaseController {
         return ResultUtil.success(imageUrl);
     }
 }
+/**
+     * 上传产品图片
+     * @param file  产品图片
+     * @param request   请求参数
+     * @return
+     */
+    @RequestMapping(value = "/uploadImage",method = RequestMethod.POST)
+    @ResponseBody
+    public Result uploadImage(@RequestParam("file") MultipartFile file, HttpServletRequest request) {
+        String partialPath = "/images/web/";
+        return super.uploadImage(file, request, partialPath);
+    }
