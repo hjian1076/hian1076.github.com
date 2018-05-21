@@ -1,0 +1,230 @@
+<%--
+  Created by IntelliJ IDEA.
+  User: tianjie
+  Date: 2017/10/24
+  Time: 14:26
+  To change this template use File | Settings | File Templates.
+--%>
+<%@ page contentType="text/html;charset=UTF-8" language="java" %>
+<%@taglib prefix="c" uri="http://java.sun.com/jsp/jstl/core" %>
+<%
+    String path = request.getContextPath();
+    String basePath = request.getScheme()+"://"+request.getServerName()+":"+request.getServerPort()+path+"/";
+%>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <!--头部-->
+    <jsp:include page="/template/header.jsp" />
+    <!--头部结束-->
+    <!-- 上述3个meta标签*必须*放在最前面，任何其他内容都*必须*跟随其后！ -->
+    <title>产品信息编辑页</title>
+    <link rel="shortcut icon" href="<%=basePath%>static/favicon.ico">
+    <link href="<%=basePath%>static/css/plugins/iCheck/custom.css" rel="stylesheet">
+</head>
+<body class="gray-bg">
+<div ng-app="myApp" ng-controller="inputProductController" class="wrapper wrapper-content scroll-wrapper">
+    <div class="row">
+        <div class="col-sm-12">
+            <div class="ibox float-e-margins">
+                <div class="ibox-title">
+                    <h3>${pageTitle}</h3>
+                </div>
+                <div class="ibox-content">
+                    <div class="form-horizontal">
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">产品名称<span style="color: red;">*</span></label>
+                            <div class="col-sm-8">
+                                <input  ng-model="product.productName" type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">产品类型<span style="color: red;">*</span></label>
+                            <div class="col-sm-8">
+                                <select ng-model="product.productType" class="form-control">
+                                    <c:forEach items="${parentList}" var="productType">
+                                        <option value="${productType.id}">${productType.name}</option>
+                                    </c:forEach>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">产品标签<span style="color: red;">*</span></label>
+                            <div class="col-sm-8">
+                                <input  ng-model="product.productLabel" type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">产品URL<span style="color: red;">*</span></label>
+                            <div class="col-sm-8">
+                                <input  ng-model="product.productUrl" type="text" class="form-control">
+                            </div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">产品图片<span style="color: red;">*</span></label>
+                            <div class="col-sm-8">
+                                <input ng-model="product.productImg" type="text" readonly="readonly" id="imageUrl" class="form-control">
+                                <form id="imageForm">
+                                <img id='img' width='120px' height='100px' src=''/><br>
+                                <input type="file" name="file" onchange="SelectImage(this);"/><br>
+                                <input type="button" onclick="uploadImage();" value="上传图片"/>
+                                </form>
+                            </div>
+                            <div id="imgPreview"></div>
+                        </div>
+                        <div class="form-group">
+                            <label class="col-sm-2 control-label">产品描述<span style="color: red;">*</span></label>
+                            <div class="col-sm-8">
+                                <input  ng-model="product.productDesc" type="hidden" class="form-control">
+                                <!-- 加载编辑器的容器 -->
+                                <jsp:include page="/WEB-INF/jsp/ueditor.jsp"></jsp:include>
+                            </div>
+                        </div>
+                        <div class="hr-line-dashed"></div>
+                        <div class="form-group">
+                            <div class="col-sm-4 col-sm-offset-2">
+                                <button class="btn btn-primary" ng-click="save()" id="subBtn" type="button">保存内容</button>
+                                <button class="btn btn-white" onclick="history.back()" type="button">取消</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+</body>
+<!-- 导入尾部公共js -->
+<jsp:include page="/template/tail.jsp" />
+
+<script>
+
+    //关闭iframe窗口
+    function closeWin(){
+        layer.closeAll('iframe'); //关闭所有的iframe层
+        history.back();
+    }
+
+    $(document).ready(function(){$(".i-checks").iCheck({checkboxClass:"icheckbox_square-green",radioClass:"iradio_square-green",})});
+
+    app.controller('inputProductController', function($scope,$http) {
+
+        $scope.product;
+        $scope.url = "/admin/product/saveProduct";
+        $scope.showPwd = true;
+        var ue = UE.getEditor("editor");
+
+        if('${update}'=='6'){
+            $scope.product = angular.fromJson(${product});
+            $scope.url = "/admin/product/updateProduct";
+            document.getElementById('img').src = $scope.product.productImg;
+            var productDesc = $scope.product.productDesc;
+            ue.addListener("ready", function () {
+                // editor准备好之后才可以使用
+                ue.execCommand('inserthtml',productDesc);
+            });
+            delete $scope.product.dataCreateTime;
+            delete $scope.product.dataUpdateTime;
+        }else{
+            $scope.product = {
+                productName:'',
+                productType:1,
+                productLabel:'',
+                productUrl:'',
+                productImg:'',
+                productDesc:''
+            };
+        }
+
+        //保存
+        $scope.save = function(){
+
+            $scope.product.productImg=$("#imageUrl").val();
+
+            if(isNull($scope.product.productName)){
+                layer.msg("产品名称不能为空");
+                return false;
+            }
+            if(isNull($scope.product.productLabel)){
+                layer.msg("产品标签不能为空");
+                return false;
+            }
+            if($scope.product.productType != 2){
+                if(isNull($scope.product.productUrl)){
+                    layer.msg("产品URL不能为空");
+                    return false;
+                }
+            }
+            if(isNull($scope.product.productImg)){
+                layer.msg("产品图片不能为空");
+                return false;
+            }
+            if(ue.hasContent){
+                layer.msg("产品描述不能为空");
+                return false;
+            }
+            $scope.product.productDesc = ue.getContent();
+            $('#subBtn')[0].disabled = true;
+            //提交数据
+            $http({method : 'POST', data:$scope.product, url : $scope.url})
+                .success(function(data,status,headers,config){
+                    console.log(data);
+                    $('#subBtn')[0].disabled = false;
+                    if(data.code==0){
+                        alert("成功");
+                        closeWin();
+                    }else{
+                        layer.msg(data.msg);
+                    }
+                }).error(function(data,status,headers,config){
+                $('#subBtn')[0].disabled = false;
+                console.log('error..........');
+                console.log(data);
+            });
+        }
+
+    });
+
+    function SelectImage(imgFile) {
+        var filextension=imgFile.value.substring(imgFile.value.lastIndexOf("."),imgFile.value.length);
+        filextension=filextension.toLowerCase();
+        if ((filextension!='.jpg')&&(filextension!='.gif')&&(filextension!='.jpeg')&&(filextension!='.png')&&(filextension!='.bmp')) {
+            alert("对不起，系统仅支持标准格式的照片，请您调整格式后重新上传，谢谢 !");
+            imgFile.value = '';
+        }
+        var reader = new FileReader();
+        reader.readAsDataURL(imgFile.files[0]);
+        reader.onload = function (evt) {
+            document.getElementById('img').src = evt.target.result;
+        }
+    }
+
+    function uploadImage() {
+        var formData = new FormData(document.getElementById('imageForm'));
+        console.log(formData);
+        $.ajax({
+            type:'POST',
+            url:'/admin/product/uploadImage',
+            data:formData,
+            async: false,
+            cache: false,
+            contentType: false,
+            processData: false,
+            success:function (data) {
+                if(data.code==0){
+                    var imageUrl = data.data;
+                    $("#imageUrl").val(imageUrl);
+                    alert('上传成功');
+                }else {
+                    layer.msg(data.msg);
+                }
+            },
+            error:function () {
+                alert('网络故障');
+            }
+        });
+    }
+</script>
+
+</html>
